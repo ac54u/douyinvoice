@@ -1,0 +1,9 @@
+Package: com.yansh.douyinvoice
+Name: 抖音语音包助手
+Version: 0.0.1
+Architecture: iphoneos-arm
+Description: 抖音一键发送自定义语音包，支持双指清屏、长按复制文案及视频原声提取。
+Maintainer: yansh
+Author: yansh
+Section: Tweaks
+Depends: mobilesubstrate (>= 0.9.5000)
