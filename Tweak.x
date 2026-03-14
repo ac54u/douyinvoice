@@ -301,9 +301,6 @@ static UILabel *g_progressLabel = nil;
     self.playingIndexPath = nil;
 }
 
-// ==========================================
-// 【UI 升级】优化顶部导航栏图标与布局
-// ==========================================
 - (void)setupLayout {
     UIView *navBar = [[UIView alloc] init];
     navBar.backgroundColor = [UIColor secondarySystemGroupedBackgroundColor];
@@ -315,7 +312,6 @@ static UILabel *g_progressLabel = nil;
     [navBar.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor].active = YES;
     [navBar.heightAnchor constraintEqualToConstant:60].active = YES;
     
-    // 1. 左侧返回/关闭按钮
     UIButton *leftBtn = [UIButton buttonWithType:UIButtonTypeSystem];
     UIImage *leftIcon = [self.currentPath.lastPathComponent isEqualToString:@"DouyinVoice"] ? [UIImage systemImageNamed:@"xmark"] : [UIImage systemImageNamed:@"chevron.left"];
     [leftBtn setImage:leftIcon forState:UIControlStateNormal];
@@ -329,7 +325,6 @@ static UILabel *g_progressLabel = nil;
     [leftBtn.widthAnchor constraintEqualToConstant:30].active = YES;
     [leftBtn.heightAnchor constraintEqualToConstant:30].active = YES;
 
-    // 2. 右侧导入文件按钮 (更换为文件图标更贴切)
     UIButton *addBtn = [UIButton buttonWithType:UIButtonTypeSystem];
     [addBtn setImage:[UIImage systemImageNamed:@"doc.badge.plus"] forState:UIControlStateNormal];
     addBtn.tintColor = COLOR_TEXT_MAIN;
@@ -342,7 +337,6 @@ static UILabel *g_progressLabel = nil;
     [addBtn.widthAnchor constraintEqualToConstant:30].active = YES;
     [addBtn.heightAnchor constraintEqualToConstant:30].active = YES;
 
-    // 3. 【新增】新建文件夹按钮
     UIButton *folderBtn = [UIButton buttonWithType:UIButtonTypeSystem];
     [folderBtn setImage:[UIImage systemImageNamed:@"folder.badge.plus"] forState:UIControlStateNormal];
     folderBtn.tintColor = COLOR_TEXT_MAIN;
@@ -355,7 +349,6 @@ static UILabel *g_progressLabel = nil;
     [folderBtn.widthAnchor constraintEqualToConstant:30].active = YES;
     [folderBtn.heightAnchor constraintEqualToConstant:30].active = YES;
 
-    // 4. 【优化】高颜值提取声音按钮
     UIButton *extractBtn = [UIButton buttonWithType:UIButtonTypeSystem];
     [extractBtn setTitle:@"提取" forState:UIControlStateNormal];
     extractBtn.titleLabel.font = [UIFont boldSystemFontOfSize:13];
@@ -372,7 +365,6 @@ static UILabel *g_progressLabel = nil;
     [extractBtn.widthAnchor constraintEqualToConstant:46].active = YES;
     [extractBtn.heightAnchor constraintEqualToConstant:28].active = YES;
 
-    // 中间标题
     UILabel *title = [[UILabel alloc] init];
     title.text = [self.currentPath.lastPathComponent isEqualToString:@"DouyinVoice"] ? @"语音包" : self.currentPath.lastPathComponent;
     title.textAlignment = NSTextAlignmentCenter;
@@ -419,9 +411,6 @@ static UILabel *g_progressLabel = nil;
     self.tableView.tableHeaderView = headerView;
 }
 
-// ==========================================
-// 【新增功能】新建文件夹系统
-// ==========================================
 - (void)createNewFolder {
     UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"新建文件夹" message:nil preferredStyle:UIAlertControllerStyleAlert];
     
@@ -452,10 +441,6 @@ static UILabel *g_progressLabel = nil;
     [self presentViewController:alert animated:YES completion:nil];
 }
 
-
-// ==========================================
-// 【核心功能】智能提取 (修复纯音频数据读写后缀Bug)
-// ==========================================
 - (void)extractCurrentVideo {
     if (!g_currentVideoModel) {
         [VoiceHelper showToast:@"❌ 未获取到视频，请退出划动一下再摇" color:COLOR_ICON_RED];
@@ -501,7 +486,6 @@ static UILabel *g_progressLabel = nil;
     NSCharacterSet *illegalChars = [NSCharacterSet characterSetWithCharactersInString:@"/\\?%*|\"<>:\n\r "];
     fileName = [[fileName componentsSeparatedByCharactersInSet:illegalChars] componentsJoinedByString:@"_"];
     
-    // --- 判断是否为图文模式 ---
     BOOL isImagePost = NO;
     @try {
         if ([model valueForKeyPath:@"imageAlbumInfo"] || [model valueForKeyPath:@"awemeModel.imageAlbumInfo"]) {
@@ -518,14 +502,12 @@ static UILabel *g_progressLabel = nil;
     NSString *urlString = nil;
     NSMutableArray *allUrls = [NSMutableArray array];
     
-    // 完善后的音乐解析路径
     NSArray *videoPaths = @[@"video.playAddr.URLList", @"video.playAddr.urlList", @"video.downloadAddr.URLList", @"video.downloadAddr.urlList", @"video.play_addr.url_list"];
     NSArray *musicPaths = @[@"music.playUrl.URLList", @"music.playUrl.urlList", @"music.play_url.url_list", @"awemeModel.music.playUrl.URLList", @"music.playAddr.URLList", @"music.playAddr.urlList", @"music.play_addr.url_list"];
     
     NSArray *primaryPaths = isImagePost ? musicPaths : videoPaths;
     NSArray *secondaryPaths = isImagePost ? videoPaths : musicPaths; 
     
-    // 1. 优先抓取
     for (NSString *path in primaryPaths) {
         @try {
             NSArray *list = [model valueForKeyPath:path];
@@ -539,7 +521,6 @@ static UILabel *g_progressLabel = nil;
         } @catch (NSException *e) {}
     }
     
-    // 2. 兜底抓取
     if (allUrls.count == 0) {
         for (NSString *path in secondaryPaths) {
             @try {
@@ -555,7 +536,6 @@ static UILabel *g_progressLabel = nil;
         }
     }
     
-    // 3. 正则兜底
     if (allUrls.count == 0) {
         @try {
             id dict = model;
@@ -818,13 +798,13 @@ static UILabel *g_progressLabel = nil;
 }
 
 // ==========================================
-// 【UI 升级】新增左滑移动文件的系统菜单
+// 【UI 升级】新增左滑导出与分享
 // ==========================================
 - (UISwipeActionsConfiguration *)tableView:(UITableView *)tableView trailingSwipeActionsConfigurationForRowAtIndexPath:(NSIndexPath *)indexPath {
     NSString *fileName = self.isSearching ? self.filteredFiles[indexPath.row] : self.files[indexPath.row];
     NSString *path = [self.currentPath stringByAppendingPathComponent:fileName];
     
-    // 1. 删除按钮
+    // 1. 删除
     UIContextualAction *del = [UIContextualAction contextualActionWithStyle:UIContextualActionStyleDestructive title:nil handler:^(UIContextualAction *a, UIView *v, void (^cb)(BOOL)) {
         UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"确认删除" message:fileName preferredStyle:UIAlertControllerStyleAlert];
         [alert addAction:[UIAlertAction actionWithTitle:@"取消" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) { cb(NO); }]];
@@ -836,7 +816,25 @@ static UILabel *g_progressLabel = nil;
     }];
     del.image = [UIImage systemImageNamed:@"trash.fill"]; del.backgroundColor = COLOR_ICON_RED;
     
-    // 2. 重命名按钮
+    // 2. 分享/导出 (新增)
+    UIContextualAction *share = [UIContextualAction contextualActionWithStyle:UIContextualActionStyleNormal title:nil handler:^(UIContextualAction *a, UIView *v, void (^cb)(BOOL)) {
+        NSURL *fileURL = [NSURL fileURLWithPath:path];
+        UIActivityViewController *activityVC = [[UIActivityViewController alloc] initWithActivityItems:@[fileURL] applicationActivities:nil];
+        
+        // iPad 防崩溃处理
+        if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad) {
+            activityVC.popoverPresentationController.sourceView = self.view;
+            activityVC.popoverPresentationController.sourceRect = CGRectMake(self.view.bounds.size.width/2, self.view.bounds.size.height/2, 0, 0);
+            activityVC.popoverPresentationController.permittedArrowDirections = 0;
+        }
+        
+        [self presentViewController:activityVC animated:YES completion:nil];
+        cb(YES);
+    }];
+    share.image = [UIImage systemImageNamed:@"square.and.arrow.up.fill"];
+    share.backgroundColor = [UIColor systemIndigoColor];
+    
+    // 3. 重命名
     UIContextualAction *ren = [UIContextualAction contextualActionWithStyle:UIContextualActionStyleNormal title:nil handler:^(UIContextualAction *a, UIView *v, void (^cb)(BOOL)) {
         UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"重命名" message:nil preferredStyle:UIAlertControllerStyleAlert];
         [alert addTextFieldWithConfigurationHandler:^(UITextField *t) { t.text = [fileName stringByDeletingPathExtension]; }];
@@ -853,16 +851,15 @@ static UILabel *g_progressLabel = nil;
     }];
     ren.image = [UIImage systemImageNamed:@"square.and.pencil"]; ren.backgroundColor = COLOR_ICON_BLUE;
     
-    // 3. 移动按钮
+    // 4. 移动
     UIContextualAction *move = [UIContextualAction contextualActionWithStyle:UIContextualActionStyleNormal title:nil handler:^(UIContextualAction *a, UIView *v, void (^cb)(BOOL)) {
-        // 获取当前目录下的所有文件夹
         NSArray *contents = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:self.currentPath error:nil];
         NSMutableArray *folders = [NSMutableArray array];
         for (NSString *item in contents) {
             BOOL isDir = NO;
             NSString *fullPath = [self.currentPath stringByAppendingPathComponent:item];
             if ([[NSFileManager defaultManager] fileExistsAtPath:fullPath isDirectory:&isDir] && isDir) {
-                if (![item isEqualToString:fileName]) { // 不能把文件夹移动到自己里面
+                if (![item isEqualToString:fileName]) { 
                     [folders addObject:item];
                 }
             }
@@ -876,28 +873,24 @@ static UILabel *g_progressLabel = nil;
         
         UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"移动到..." message:nil preferredStyle:UIAlertControllerStyleActionSheet];
         
-        // 兼容 iPad 的防崩溃处理
         if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad) {
             alert.popoverPresentationController.sourceView = self.view;
             alert.popoverPresentationController.sourceRect = CGRectMake(self.view.bounds.size.width/2, self.view.bounds.size.height/2, 0, 0);
             alert.popoverPresentationController.permittedArrowDirections = 0;
         }
         
-        // 添加文件夹选项
         for (NSString *folder in folders) {
             [alert addAction:[UIAlertAction actionWithTitle:[NSString stringWithFormat:@"📂 %@", folder] style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
                 NSString *baseName = [fileName stringByDeletingPathExtension];
                 NSString *ext = [fileName pathExtension];
                 NSString *destPath = [[self.currentPath stringByAppendingPathComponent:folder] stringByAppendingPathComponent:fileName];
                 
-                // 防重名处理：如果目标文件夹里已经有同名文件，自动加数字后缀
                 int i = 1;
                 while ([[NSFileManager defaultManager] fileExistsAtPath:destPath]) {
                     NSString *newName = ext.length > 0 ? [NSString stringWithFormat:@"%@_%d.%@", baseName, i++, ext] : [NSString stringWithFormat:@"%@_%d", baseName, i++];
                     destPath = [[self.currentPath stringByAppendingPathComponent:folder] stringByAppendingPathComponent:newName];
                 }
                 
-                // 停止当前正在播放的声音
                 if (self.playingIndexPath && indexPath.row == self.playingIndexPath.row) { 
                     [self.player stop]; self.player = nil; self.playingIndexPath = nil; 
                 }
@@ -914,7 +907,8 @@ static UILabel *g_progressLabel = nil;
     move.image = [UIImage systemImageNamed:@"arrow.turn.down.right"];
     move.backgroundColor = [UIColor systemOrangeColor];
     
-    return [UISwipeActionsConfiguration configurationWithActions:@[del, move, ren]];
+    // 数组里越靠前的 Action，在左滑菜单里越靠右
+    return [UISwipeActionsConfiguration configurationWithActions:@[del, share, move, ren]];
 }
 
 - (void)importFile {
